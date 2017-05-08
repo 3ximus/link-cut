@@ -43,6 +43,9 @@ void cut(LCT T, int r, int v) {
 
 }
 
+/**
+ * Returns 0 - True or 1 - False
+ */
 int connectedQ(LCT T, int r, int v) {
 	return 0;
 }
@@ -64,6 +67,7 @@ int main() {
 				cut(T, arg1, arg2);
 				break;
 			case 'Q':
+				printf( (1 == connectedQ(T, arg1, arg2)) ? "F\n" : "T\n");
 				break;
 			default:
 				printf("Unknown command %c", command);
