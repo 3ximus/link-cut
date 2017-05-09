@@ -5,7 +5,13 @@
 
 
 LCT allocLCT(int size) {
-	return (LCT)malloc(sizeof(struct LCT)*size);
+	LCT sp = (LCT)malloc(sizeof(struct LCT)*size);
+	int i;
+	for (i = 0; i < size ; i++) { /* initialize nodes */
+		(sp + i)->left = (sp + i)->right = NULL;
+		(sp + i)->id = i;
+	}
+	return sp;
 }
 
 void freeLCT(LCT T) {
