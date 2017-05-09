@@ -1,20 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "splay-tree.h"
 
-
-typedef struct LCT *LCT;
-
-struct LCT {
-	LCT left;
-	LCT right;
-	LCT* hook;
-	int sum; /* sub-tree size, negative values mean left and right must be swamped */
-};
 
 LCT allocLCT(int size) {
-	return (LCT)malloc(sizeof(LCT)*size);
-
+	return (LCT)malloc(sizeof(struct LCT)*size);
 }
 
 void freeLCT(LCT T) {
