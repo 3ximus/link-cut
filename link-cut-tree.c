@@ -14,17 +14,17 @@ LCT allocLCT(int size) {
 	return sp;
 }
 
-void freeLCT(LCT T) {
-
+void freeLCT(LCT t) {
+	free(t);
 }
 
 
-void access(LCT T, int v) {
-
+void access(LCT t, int v) {
+	/* TODO */
 }
 
-void reRoot(LCT T, int v) {
-
+void reRoot(LCT t, int v) {
+	splay(t, v);
 }
 
 
@@ -32,18 +32,21 @@ void reRoot(LCT T, int v) {
  * MAIN METHODS
  */
 
-void link(LCT T, int r, int v) {
-
+void link(LCT t, int r, int v) {
+	/* TODO */
 }
 
-void cut(LCT T, int r, int v) {
-
+void cut(LCT t, int r, int v) {
+	/* TODO */
 }
 
 /**
  * Returns 0 - True or 1 - False
  */
-int connectedQ(LCT T, int r, int v) {
+int connectedQ(LCT t, int r, int v) {
+	reRoot(t, r);
+	access(t, v);
+	/* TODO */
 	return 0;
 }
 
@@ -53,18 +56,18 @@ int main() {
 	int arg1, arg2, size;
 
 	scanf("%d\n", &size);
-	LCT T = allocLCT(size);
+	LCT t = allocLCT(size);
 
 	while (scanf("%c %d %d\n", &command, &arg1, &arg2) != EOF) {
 		switch (command) {
 			case 'L':
-				link(T, arg1, arg2);
+				link(t, arg1, arg2);
 				break;
 			case 'C':
-				cut(T, arg1, arg2);
+				cut(t, arg1, arg2);
 				break;
 			case 'Q':
-				printf( (1 == connectedQ(T, arg1, arg2)) ? "F\n" : "T\n");
+				printf( (1 == connectedQ(t, arg1, arg2)) ? "F\n" : "T\n");
 				break;
 			default:
 				printf("Unknown command %c", command);

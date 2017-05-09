@@ -1,6 +1,6 @@
 #!/bin/bash
 
-make || exit 1
+make --quiet || exit 1
 
 hash colordiff 2>/dev/null && DIFF=colordiff || DIFF=diff
 
@@ -25,6 +25,6 @@ for in in ${@:-tests/*.txt} ; do
 		echo -e "\e[0m"
 done
 
-make clean
+make --quiet clean
 rm tests/*.out
 [[ -e time.log ]] && rm time.log
