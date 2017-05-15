@@ -217,19 +217,19 @@ int print_st_aux(Node* tree, int is_left, int offset, int depth, char s[20][255]
     int right = print_st_aux(tree->right, 0, offset + left + width, depth + 1, s, simple);
 
     int i;
-    for ( i = 0; i < width; i++)
+    for (i = 0; i < width; i++)
         s[depth][offset + left + i] = b[i];
 
     if (depth && is_left) {
 
-        for ( i = 0; i < width + right; i++)
+        for (i = 0; i < width + right; i++)
             s[depth - 1][offset + left + width / 2 + i] = '-';
 
         s[depth - 1][offset + left + width / 2] = '.';
 
     } else if (depth && !is_left) {
 
-        for ( i = 0; i < left + width; i++)
+        for (i = 0; i < left + width; i++)
             s[depth - 1][offset - width / 2 + i] = '-';
 
         s[depth - 1][offset + left + width / 2] = '.';
@@ -242,14 +242,14 @@ int print_st_aux(Node* tree, int is_left, int offset, int depth, char s[20][255]
 void print_st(Node* tree, int simple) {
     char s[20][255];
     int i;
-    for ( i = 0; i < 20; i++) {
+    for (i = 0; i < 20; i++) {
         sprintf(s[i], "%80s", " ");
     }
     print_st_aux(tree, 0, 0, 0, s, simple);
 
     char test_str[81];
     sprintf(test_str, "%80s", " ");
-    for ( i = 0; i < 20; i++) {
+    for (i = 0; i < 20; i++) {
         if(strncmp(s[i], test_str, 81) == 0) {
             break;
         }
@@ -294,6 +294,7 @@ Tree *TREE = NULL;
 
 
 void print_tree(int color, Tree *tree);
+int connected(Tree *tree, int _v, int _w);
 
 Tree *make_tree(int size) {
     LOG_CMD(PRINT_START, "Making a tree of size %d.\n", size);
@@ -302,7 +303,7 @@ Tree *make_tree(int size) {
 
     tree->nodes = (Node **)malloc(sizeof(Node *) * size);
     int i;
-    for( i = 0; i < size; i++) {
+    for (i = 0; i < size; i++) {
         tree->nodes[i] = make_node(i+1);
     }
     tree->size = size;
@@ -319,7 +320,7 @@ void free_tree(Tree *tree) {
     assert(tree);
 
     int i;
-    for( i = 0; i < tree->size; i++) {
+    for (i = 0; i < tree->size; i++) {
         free(tree->nodes[i]);
         tree->nodes[i] = NULL;
     }
@@ -368,24 +369,28 @@ void access(Node *v) {
 void cut(Tree *tree, int _v, int _w) {
     Node *v = tree->nodes[_v];
     Node *w = tree->nodes[_w];
-    LOG_CMD(PRINT_CUT, "Cutting %d from _w (on the represented tree).\n", v->id, w->id);
+    LOG_CMD(PRINT_CUT, "Cutting %d from %d (on the represented tree).\n", v->id, w->id);
 
 	/* @SEE: Can we just do this here or do we need to do the access as well to make */
+	/* Just remove the path parents if that is the case. This is O(1), so it must preserve O(log(N)) amortized */
 	if (v->path_parent == w) {
 		v->path_parent = NULL;
 	} else if (w->path_parent == v) {
 		w->path_parent = NULL;
 	} else {
+		access(w);
 		access(v);
 
-		if (v->left && v->left->id == w->id) { /* If the w node is bellow (one child) on the represented tree */
+		if (v->left && v->left->id == w->id) { /* If the w node is above (the parent) on the represented tree */
 			v->left->parent = NULL;
 			v->left = NULL;
-		} else if (v->right && v->right->id == w->id) { /* If the w node is above (is the parent) on the represented tree */
-			v->right->parent = NULL;
-			v->right = NULL;
 		} else {
-	    	LOG_CMD(PRINT_SPECIAL, "Tryed to cut nodes not connected.\n", v->id);
+            splay(w); /* Make w the root of its aux tree */
+            if (w->path_parent == v) {
+    			w->path_parent = NULL;
+            } else {
+	    	    LOG_CMD(PRINT_SPECIAL, "Tryed to cut nodes not connected.\n", v->id);
+            }
 		}
 	}
 
@@ -462,16 +467,16 @@ void print_tree(int color, Tree *tree) {
         int inserted_roots = 0;
 
         /* Find all diferent roots of aux trees */
-	int i;
-        for ( i = 0; i < tree->size; i++) {
+		int i;
+        for (i = 0; i < tree->size; i++) {
             Node *root = tree->nodes[i];
             while(root->parent) {
                 root = root->parent;
             }
 
             int found = 0;
-	    int j;
-            for ( j = 0; j < inserted_roots; j++) {
+	    	int j;
+            for (j = 0; j < inserted_roots; j++) {
                 if(unique_aux_roots[j] == root) {
                     found = 1;
                     break;
@@ -485,8 +490,7 @@ void print_tree(int color, Tree *tree) {
         }
         printf("%s", COLORS[(color % 7) + 1]);
         printf("============= TREE OF TREES ==============\n");
-	int i;
-        for( i = 0; i < inserted_roots; i++) {
+        for (i = 0; i < inserted_roots; i++) {
             printf("--------------------------------------\n");
             /*printf("Path parent = %p\n", unique_aux_roots[i]->path_parent ? unique_aux_roots[i]->path_parent->id : 0); */
             print_st(unique_aux_roots[i], 0);
@@ -513,7 +517,6 @@ int main() {
 				link(tree, arg1, arg2);
 				break;
 			case 'C':
-                /* @SEE: Our cut only receives an argument and cuts this node from its parent. Do we need to change this? */
 				cut(tree, arg2, arg1);
 				/* cut(tree, arg1, arg2); */
 				break;
