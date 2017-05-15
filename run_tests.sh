@@ -13,8 +13,8 @@ for in in ${@:-tests/*.txt} ; do
 	output=$(diff -q $out "tests/expected-output/$tst")
 	if [[ $output ]]; then
 		echo -e "[ \e[1;38;5;196mFailed\e[0m ]"
-		echo -e "\e[1mTest								Expected\e[0m"
-		$DIFF -y $out "tests/expected-output/$tst"
+		echo -e "     \e[1mTest                                                        Expected\e[0m"
+		$DIFF -y <(nl $out) <(nl "tests/expected-output/$tst")
 	else
 		echo -e "[ \e[1;38;5;41mSucceded\e[0m ]"
 	fi

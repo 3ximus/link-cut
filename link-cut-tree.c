@@ -10,17 +10,18 @@
 #define PRINT_CUT 2
 #define PRINT_LINK 3
 #define PRINT_CONNECTED 4
+#define PRINT_SPECIAL 5
 
 #if DEBUG
     const char* COLORS[] = {
         "",
-        "\033[30m", /*GREY*/
-        "\033[34m", /*BLUE*/
-        "\033[31m", /*RED*/
-        "\033[32m", /*GREEN*/
-        "\033[33m", /*YELLOW*/
-        "\033[35m", /*PURPLE*/
-        "\033[36m", /*CYAN*/
+        "\033[30m", /*GREY */
+        "\033[34m", /*BLUE */
+        "\033[31m", /*RED */
+        "\033[32m", /*GREEN */
+        "\033[33m", /*YELLOW */
+        "\033[35m", /*PURPLE */
+        "\033[36m", /*CYAN */
     };
     const char* NO_COLOR = "\033[0m";
 #endif
@@ -38,21 +39,21 @@ void LOG_CMD(int color, const char* fmt, ...) {
         fflush(stdout);
     #endif
 }
-/* #################################################*/
-/* ################### NODE ########################*/
-/* #################################################*/
+/* ################################################# */
+/* ################### NODE ######################## */
+/* ################################################# */
 typedef struct node_str Node;
 struct node_str {
-    int id; /* Unused really, just for representation in printing*/
+    int id; /* Unused really, just for representation in printing */
 
     Node *left;
     Node *right;
     Node *parent;
-    Node *path_parent; /* We can in the end take this off (or not). Leave it for now, for simplicity. Here there is a tradeoff space/time.*/
+    Node *path_parent; /* We can in the end take this off (or not). Leave it for now, for simplicity. Here there is a tradeoff space/time. */
 };
 
 Node *make_node(int id) {
-    Node *res = calloc(sizeof(Node), 1); /* Calloc makes everything NULL*/
+    Node *res = calloc(sizeof(Node), 1); /* Calloc makes everything NULL */
     res->id = id;
 
     return res;
@@ -66,7 +67,7 @@ Node* grand_parent(Node* node) {
     return parent(parent(node));
 }
 
-/* root of its aux tree*/
+/* root of its aux tree */
 int is_root(Node *node) {
     assert(node);
     return (node->parent != NULL);
@@ -90,7 +91,7 @@ z           z
   y   OR  y
    \       \
     x       x
-*/
+ */
 void rotate_left(Node* y) {
     assert(y);
     Node *x = y->right;
@@ -98,7 +99,7 @@ void rotate_left(Node* y) {
     Node *z = y->parent;
 
     if (z == NULL) {
-        /* skip*/
+        /* skip */
     } else if (is_left_child(y)) {
         z->left = x;
     } else if (is_right_child(y)) {
@@ -123,7 +124,7 @@ void rotate_right(Node* y) {
     Node *z = y->parent;
 
     if (z == NULL) {
-        /* skip*/
+        /* skip */
     } else if (is_left_child(y)) {
         z->left = x;
     } else if (is_right_child(y)) {
@@ -148,43 +149,43 @@ void splay(Node* x) {
 
     Node *p, *pp;
     while (1) {
-        p  = x->parent; /* Parent*/
+        p  = x->parent; /* Parent */
         if(p == NULL) {
             break;
         }
 
-        pp = grand_parent(x); /* Grand-parent*/
-		if (pp == NULL) { /* p is root*/
+        pp = grand_parent(x); /* Grand-parent */
+		if (pp == NULL) { /* p is root */
 			x->path_parent = p->path_parent;
 			p->path_parent = NULL;
-		} else if (pp->parent == NULL) { /* pp is root*/
+		} else if (pp->parent == NULL) { /* pp is root */
 			x->path_parent = pp->path_parent;
 			pp->path_parent = NULL;
 		}
 
         if (is_left_child(x)) {
-            if (pp == NULL) { /* Zig*/
+            if (pp == NULL) { /* Zig */
                 rotate_right(p);
                 return;
 
-            } else if (is_left_child(p)) { /* Zig-Zig -> x is left of p(x) and p(x) is left of g(x)*/
+            } else if (is_left_child(p)) { /* Zig-Zig -> x is left of p(x) and p(x) is left of g(x) */
                 rotate_right(grand_parent(x));
                 rotate_right(parent(x));
 
-            } else { /* Zig-Zag -> x is left of p(x) and p(x) is right of g(x)*/
+            } else { /* Zig-Zag -> x is left of p(x) and p(x) is right of g(x) */
                 rotate_right(parent(x));
                 rotate_left(parent(x));
             }
-        } else { /* is_right_child(x)*/
-            if (pp == NULL) { /* Zig*/
+        } else { /* is_right_child(x) */
+            if (pp == NULL) { /* Zig */
                 rotate_left(p);
                 return;
 
-            } else if (is_right_child(p)) { /* Zig-Zig -> x is right of p(x) and p(x) is right of g(x)*/
+            } else if (is_right_child(p)) { /* Zig-Zig -> x is right of p(x) and p(x) is right of g(x) */
                 rotate_left(grand_parent(x));
                 rotate_left(parent(x));
 
-            } else { /* Zig-Zag -> x is right of p(x) and p(x) is left of g(x)*/
+            } else { /* Zig-Zag -> x is right of p(x) and p(x) is left of g(x) */
                 rotate_left(parent(x));
                 rotate_right(parent(x));
             }
@@ -192,7 +193,7 @@ void splay(Node* x) {
     }
 }
 
-/* Printing recursive auxiliary function*/
+/* Printing recursive auxiliary function */
 int print_st_aux(Node* tree, int is_left, int offset, int depth, char s[20][255], int simple) {
     if(depth > 19) {
         printf("I'm in too deep.\n");
@@ -237,7 +238,7 @@ int print_st_aux(Node* tree, int is_left, int offset, int depth, char s[20][255]
     return left + width + right;
 }
 
-/* Print an aux tree*/
+/* Print an aux tree */
 void print_st(Node* tree, int simple) {
     char s[20][255];
     int i;
@@ -256,7 +257,7 @@ void print_st(Node* tree, int simple) {
     }
 }
 
-/* LEL */
+/* LEL  */
 void print_node(Node* node) {
     assert(node);
     printf("====================================\n");
@@ -281,9 +282,9 @@ void print_node(Node* node) {
 }
 
 
-/* #################################################*/
-/* ################### TREE ########################*/
-/* #################################################*/
+/* ################################################# */
+/* ################### TREE ######################## */
+/* ################################################# */
 typedef struct tree_str Tree;
 struct tree_str {
     Node** nodes;
@@ -312,7 +313,7 @@ Tree *make_tree(int size) {
     return tree;
 }
 
-/* Useless, but OK*/
+/* Useless, but OK */
 void free_tree(Tree *tree) {
     LOG_CMD(2, "Freeing tree.\n");
     assert(tree);
@@ -334,23 +335,23 @@ void access(Node *v) {
     assert(v);
     LOG_CMD(0, "Acessing %d.\n", v->id);
 
-    /* Splays within its aux tree*/
+    /* Splays within its aux tree */
     splay(v);
 
-    /* Remove v's preferred child*/
+    /* Remove v's preferred child */
     if (v->right) {
         v->right->path_parent = v;
         v->right->parent = NULL;
         v->right = NULL;
     }
 
-    /* Changes the preferred path to be this new one*/
+    /* Changes the preferred path to be this new one */
     while(v->path_parent) {
-		/* print_tree(0, TREE);*/
+		/* print_tree(0, TREE); */
         Node *w = v->path_parent;
         splay(w);
 
-        /* Switch w's preferred child from whatever it was to v*/
+        /* Switch w's preferred child from whatever it was to v */
         if(w->right) {
             w->right->path_parent = w;
             w->right->parent = NULL;
@@ -361,20 +362,31 @@ void access(Node *v) {
 
         splay(v);
     }
-	/* print_tree(0, TREE);*/
+	/* print_tree(0, TREE); */
 }
 
 void cut(Tree *tree, int _v, int _w) {
     Node *v = tree->nodes[_v];
     Node *w = tree->nodes[_w];
-    LOG_CMD(PRINT_CUT, "Cutting %d from it's parent (on the represented tree).\n", v->id);
+    LOG_CMD(PRINT_CUT, "Cutting %d from _w (on the represented tree).\n", v->id, w->id);
 
-    access(v);
-    if(v->left && v->left->id == w->id) {
-		v->left->parent = NULL;
-        v->left = NULL;
-    } else if (w->path_parent == v) {
+	/* @SEE: Can we just do this here or do we need to do the access as well to make */
+	if (v->path_parent == w) {
+		v->path_parent = NULL;
+	} else if (w->path_parent == v) {
 		w->path_parent = NULL;
+	} else {
+		access(v);
+
+		if (v->left && v->left->id == w->id) { /* If the w node is bellow (one child) on the represented tree */
+			v->left->parent = NULL;
+			v->left = NULL;
+		} else if (v->right && v->right->id == w->id) { /* If the w node is above (is the parent) on the represented tree */
+			v->right->parent = NULL;
+			v->right = NULL;
+		} else {
+	    	LOG_CMD(PRINT_SPECIAL, "Tryed to cut nodes not connected.\n", v->id);
+		}
 	}
 
     LOG_CMD(PRINT_CUT, "After cut: \n");
@@ -384,10 +396,16 @@ void cut(Tree *tree, int _v, int _w) {
 void link(Tree *tree, int _v, int _w) {
     Node *v = tree->nodes[_v];
     Node *w = tree->nodes[_w];
-
     LOG_CMD(PRINT_LINK, "Linking %d and %d.\n", v->id, w->id);
 
-    /* v and w must be on different trees.*/
+
+	/* This is O(log(N)) */
+	if (connected(tree, _v, _w)) {
+	    LOG_CMD(PRINT_SPECIAL, "Tryed to link nodes already connected, so skip this one.\n", v->id);
+		return;
+	}
+
+    /* v and w must be on different trees. */
     access(v);
     access(w);
 
@@ -423,8 +441,8 @@ int connected(Tree *tree, int _v, int _w) {
     assert(w);
     assert(v);
 
-    /* @SEE: Does this work, or does this only work to find if the nodes are within the same*/
-    /* splay tree (aka aux tree, aka preferred path)*/
+    /* @SEE: Does this work, or does this only work to find if the nodes are within the same */
+    /* splay tree (aka aux tree, aka preferred path) */
     Node *v_root = find_root(v);
     LOG_CMD(PRINT_CONNECTED, "After first find root: \n");
     print_tree(PRINT_CONNECTED, tree);
@@ -443,7 +461,7 @@ void print_tree(int color, Tree *tree) {
         Node *unique_aux_roots[tree->size];
         int inserted_roots = 0;
 
-        /* Find all diferent roots of aux trees*/
+        /* Find all diferent roots of aux trees */
 	int i;
         for ( i = 0; i < tree->size; i++) {
             Node *root = tree->nodes[i];
@@ -470,7 +488,7 @@ void print_tree(int color, Tree *tree) {
 	int i;
         for( i = 0; i < inserted_roots; i++) {
             printf("--------------------------------------\n");
-            /*printf("Path parent = %p\n", unique_aux_roots[i]->path_parent ? unique_aux_roots[i]->path_parent->id : 0);*/
+            /*printf("Path parent = %p\n", unique_aux_roots[i]->path_parent ? unique_aux_roots[i]->path_parent->id : 0); */
             print_st(unique_aux_roots[i], 0);
         }
         printf("==========================================\n");
@@ -495,9 +513,9 @@ int main() {
 				link(tree, arg1, arg2);
 				break;
 			case 'C':
-                /* @SEE: Our cut only receives an argument and cuts this node from its parent. Do we need to change this?*/
-				cut(tree, arg1, arg2);
-				/* cut(tree, arg1, arg2);*/
+                /* @SEE: Our cut only receives an argument and cuts this node from its parent. Do we need to change this? */
+				cut(tree, arg2, arg1);
+				/* cut(tree, arg1, arg2); */
 				break;
 			case 'Q':
 				printf(connected(tree, arg1, arg2) ? "T\n" : "F\n");
