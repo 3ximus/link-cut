@@ -10,6 +10,7 @@
 #define PRINT_CUT 2
 #define PRINT_LINK 3
 #define PRINT_CONNECTED 4
+
 #if DEBUG
     const char* COLORS[] = {
         "",
@@ -153,6 +154,14 @@ void splay(Node* x) {
         }
 
         pp = grand_parent(x); // Grand-parent
+		if (pp == NULL) { // p is root
+			x->path_parent = p->path_parent;
+			p->path_parent = NULL;
+		} else if (pp->parent == NULL) { // pp is root
+			x->path_parent = pp->path_parent;
+			pp->path_parent = NULL;
+		}
+
         if (is_left_child(x)) {
             if (pp == NULL) { // Zig
                 rotate_right(p);
@@ -193,7 +202,7 @@ int print_st_aux(Node* tree, int is_left, int offset, int depth, char s[20][255]
     char b[20];
     int width = 4;
     if(!simple)
-        width = 9;
+        width = 10;
 
     if (!tree)
         return 0;
@@ -201,7 +210,7 @@ int print_st_aux(Node* tree, int is_left, int offset, int depth, char s[20][255]
     if(simple)
         sprintf(b, "(%02d)", tree->id);
     else
-        sprintf(b, "(pp:%02d|%01d)", tree->path_parent ? tree->path_parent->id : -1, tree->id);
+        sprintf(b, "(pp:%02d|%02d)", tree->path_parent ? tree->path_parent->id : -1, tree->id);
 
     int left = print_st_aux(tree->left, 1, offset, depth + 1, s, simple);
     int right = print_st_aux(tree->right, 0, offset + left + width, depth + 1, s, simple);
@@ -278,6 +287,8 @@ struct tree_str {
     Node** nodes;
     int size;
 };
+Tree *TREE = NULL;
+
 
 void print_tree(int color, Tree *tree);
 
@@ -331,6 +342,7 @@ void access(Node *v) {
 
     // Changes the preferred path to be this new one
     while(v->path_parent) {
+		print_tree(0, TREE);
         Node *w = v->path_parent;
         splay(w);
 
@@ -345,6 +357,7 @@ void access(Node *v) {
 
         splay(v);
     }
+	print_tree(0, TREE);
 }
 
 void cut(Tree *tree, int _v) {
@@ -371,11 +384,8 @@ void link(Tree *tree, int _v, int _w) {
     access(v);
     access(w);
 
-    // This could and probably should be (for better balancing)
     w->right = v;
     v->parent = w;
-    // v->left = w;
-    // w->parent = v;
 
     LOG_CMD(PRINT_LINK, "After the link.\n");
     print_tree(PRINT_LINK, tree);
@@ -411,7 +421,6 @@ int connected(Tree *tree, int _v, int _w) {
     Node *v_root = find_root(v);
     LOG_CMD(PRINT_CONNECTED, "After first find root: \n");
     print_tree(PRINT_CONNECTED, tree);
-
 
     int res = (v_root == find_root(w));
 
@@ -467,7 +476,7 @@ int main() {
 
 	scanf("%d\n", &size);
 	Tree *tree = make_tree(size);
-
+	TREE = tree;
 	while (scanf("%c %d %d\n", &command, &arg1, &arg2) != EOF) {
 		arg1--;
         arg2--;
