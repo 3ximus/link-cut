@@ -365,34 +365,34 @@ void access(Node *v) {
     }
 	/* print_tree(0, TREE); */
 }
+Node *get_right_most_node(Node *node) {
+    assert(node);
+
+    while(node->right) {
+        node = node->right;
+    }
+    return node;
+}
 
 void cut(Tree *tree, int _v, int _w) {
     Node *v = tree->nodes[_v];
     Node *w = tree->nodes[_w];
     LOG_CMD(PRINT_CUT, "Cutting %d from %d (on the represented tree).\n", v->id, w->id);
 
-	/* @SEE: Can we just do this here or do we need to do the access as well to make */
-	/* Just remove the path parents if that is the case. This is O(1), so it must preserve O(log(N)) amortized */
-	if (v->path_parent == w) {
-		v->path_parent = NULL;
-	} else if (w->path_parent == v) {
-		w->path_parent = NULL;
-	} else {
-		access(w);
-		access(v);
+    access(v);
+    if (v->left && get_right_most_node(v->left) == w) {
+        LOG_CMD(PRINT_SPECIAL, "%d was the parent of %d.\n", v->id, w->id);
 
-		if (v->left && v->left->id == w->id) { /* If the w node is above (the parent) on the represented tree */
-			v->left->parent = NULL;
-			v->left = NULL;
-		} else {
-            splay(w); /* Make w the root of its aux tree */
-            if (w->path_parent == v) {
-    			w->path_parent = NULL;
-            } else {
-	    	    LOG_CMD(PRINT_SPECIAL, "Tryed to cut nodes not connected.\n", v->id);
-            }
-		}
-	}
+        v->left->parent = NULL;
+        v->left = NULL;
+    } else {
+        splay(w);
+        if (w->left == NULL && w->path_parent == v) {
+            w->path_parent = NULL;
+        } else {
+            LOG_CMD(PRINT_SPECIAL, "Tryed to cut nodes not connected.\n");
+        }
+    }
 
     LOG_CMD(PRINT_CUT, "After cut: \n");
     print_tree(PRINT_CUT, tree);
@@ -405,6 +405,7 @@ void link(Tree *tree, int _v, int _w) {
 
 
 	/* This is O(log(N)) */
+    /* @Question: Can we just check if v is still the parent of its tree after access w? */
 	if (connected(tree, _v, _w)) {
 	    LOG_CMD(PRINT_SPECIAL, "Tryed to link nodes already connected, so skip this one.\n", v->id);
 		return;
