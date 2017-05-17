@@ -1,6 +1,6 @@
 CC=gcc
-FLAGS=-O3 -ansi -Wall -g
-# FLAGS=-Wall -Wextra -ggdb
+# FLAGS=-O3 -ansi -Wall -g
+FLAGS=-ansi -Wall -g
 
 all: link-cut-tree.c
 	$(CC) $(FLAGS) link-cut-tree.c -o project

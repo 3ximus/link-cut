@@ -5,6 +5,10 @@
 #include <stdarg.h>
 
 #define DEBUG 0
+#define ACTUALLY_FLIP 0
+
+#define NOT_FLIPED 0
+#define FLIPED 1
 
 #define PRINT_START 1
 #define PRINT_CUT 2
@@ -50,6 +54,8 @@ struct node_str {
     Node *right;
     Node *parent;
     Node *path_parent; /* We can in the end take this off (or not). Leave it for now, for simplicity. Here there is a tradeoff space/time. */
+
+    char is_fliped;
 };
 
 Node *make_node(int id) {
@@ -83,6 +89,25 @@ int is_right_child(Node* node) {
     assert(node);
     assert(node->parent);
     return (node->parent->right == node);
+}
+
+void unflip(Node *v) {
+    /* Only something to do if we are fliped */
+    if(v->is_fliped) {
+        /* Swap them in memory*/
+        Node *aux = v->right;
+        v->right = v->left;
+        v->left = aux;
+
+        /* Make us not fliped and 'flip' the bits of the childs */
+        v->is_fliped = NOT_FLIPED;
+        if(v->left) {
+            v->left->is_fliped = !(v->left->is_fliped);
+        }
+        if(v->right) {
+            v->right->is_fliped = !(v->right->is_fliped);
+        }
+    }
 }
 
 /* This, where x a y can have subtrees as well
@@ -154,6 +179,7 @@ void splay(Node* x) {
             break;
         }
 
+        /* Propagate path_parent */
         pp = grand_parent(x); /* Grand-parent */
 		if (pp == NULL) { /* p is root */
 			x->path_parent = p->path_parent;
@@ -162,6 +188,13 @@ void splay(Node* x) {
 			x->path_parent = pp->path_parent;
 			pp->path_parent = NULL;
 		}
+
+        /* Unflip if we have any node fliped (from the grandparent to the child) */
+        if (pp) {
+            unflip(pp);
+        }
+        unflip(p);
+        unflip(x);
 
         if (is_left_child(x)) {
             if (pp == NULL) { /* Zig */
@@ -191,6 +224,8 @@ void splay(Node* x) {
             }
         }
     }
+
+    unflip(x);
 }
 
 /* Printing recursive auxiliary function */
@@ -213,8 +248,8 @@ int print_st_aux(Node* tree, int is_left, int offset, int depth, char s[20][255]
     else
         sprintf(b, "(pp:%02d|%02d)", tree->path_parent ? tree->path_parent->id : -1, tree->id);
 
-    int left = print_st_aux(tree->left, 1, offset, depth + 1, s, simple);
-    int right = print_st_aux(tree->right, 0, offset + left + width, depth + 1, s, simple);
+    int left = print_st_aux(tree->is_fliped ? tree->right : tree->left, 1, offset, depth + 1, s, simple);
+    int right = print_st_aux(tree->is_fliped ? tree->left : tree->right, 0, offset + left + width, depth + 1, s, simple);
 
     int i;
     for (i = 0; i < width; i++)
@@ -295,6 +330,7 @@ Tree *TREE = NULL;
 
 void print_tree(int color, Tree *tree);
 int connected(Tree *tree, int _v, int _w);
+void unflip_all(Node *n);
 
 Tree *make_tree(int size) {
     LOG_CMD(PRINT_START, "Making a tree of size %d.\n", size);
@@ -312,6 +348,17 @@ Tree *make_tree(int size) {
     print_tree(PRINT_START, tree);
 
     return tree;
+}
+
+Tree *copy_tree(Tree *t) {
+    assert(t);
+
+    Tree *new_tree = make_tree(t->size);
+    int i;
+    for (i = 0; i < new_tree->size; i++) {
+        memcpy(new_tree->nodes[i], t->nodes[i], sizeof(Node));
+    }
+    return new_tree;
 }
 
 /* Useless, but OK */
@@ -363,40 +410,71 @@ void access(Node *v) {
 
         splay(v);
     }
-	/* print_tree(0, TREE); */
 }
-Node *get_right_most_node(Node *node) {
+
+/*Node *get_right_most_node(Node *node) {
     assert(node);
 
+    unflip(node);
     while(node->right) {
         node = node->right;
+        unflip(node);
     }
     return node;
+}*/
+
+
+void re_root(Node *new_root) {
+#if ACTUALLY_FLIP
+    /* Actually do it for testing */
+    access(new_root);
+    new_root->is_fliped = !new_root->is_fliped;
+    unflip_all(new_root);
+#else
+    /* just flip a bit */
+    access(new_root);
+    new_root->is_fliped = !new_root->is_fliped;
+#endif
 }
 
 void cut(Tree *tree, int _v, int _w) {
     Node *v = tree->nodes[_v];
     Node *w = tree->nodes[_w];
-    LOG_CMD(PRINT_CUT, "Cutting %d from %d (on the represented tree).\n", v->id, w->id);
+    LOG_CMD(PRINT_CUT, "Cutting %d and %d (on the represented tree).\n", v->id, w->id);
 
+    re_root(v);
+    access(v); /* REMOVE ME I THINK */
+    access(w);
+
+    if(w->left == v) {
+        w->left->parent = NULL;
+        w->left = NULL;
+    } else {
+        LOG_CMD(PRINT_SPECIAL, "Tryed to cut nodes not connected.\n");
+    }
+
+    /* My version that should also work
     access(v);
     if (v->left && get_right_most_node(v->left) == w) {
-        LOG_CMD(PRINT_SPECIAL, "%d was the parent of %d.\n", v->id, w->id);
+        LOG_CMD(PRINT_SPECIAL, "%d was the parent of %d.\n", w->id, v->id);
 
         v->left->parent = NULL;
         v->left = NULL;
     } else {
         splay(w);
         if (w->left == NULL && w->path_parent == v) {
+            LOG_CMD(PRINT_SPECIAL, "%d was a child of %d.\n", w->id, v->id);
             w->path_parent = NULL;
         } else {
             LOG_CMD(PRINT_SPECIAL, "Tryed to cut nodes not connected.\n");
         }
     }
+    */
 
     LOG_CMD(PRINT_CUT, "After cut: \n");
     print_tree(PRINT_CUT, tree);
 }
+
 
 void link(Tree *tree, int _v, int _w) {
     Node *v = tree->nodes[_v];
@@ -404,19 +482,32 @@ void link(Tree *tree, int _v, int _w) {
     LOG_CMD(PRINT_LINK, "Linking %d and %d.\n", v->id, w->id);
 
 
-	/* This is O(log(N)) */
     /* @Question: Can we just check if v is still the parent of its tree after access w? */
-	if (connected(tree, _v, _w)) {
+	/*if (connected(tree, _v, _w)) {
 	    LOG_CMD(PRINT_SPECIAL, "Tryed to link nodes already connected, so skip this one.\n", v->id);
 		return;
-	}
+	}*/
 
-    /* v and w must be on different trees. */
+    /* v and w must be on different trees if we reached here. */
+    re_root(v);
     access(v);
     access(w);
 
+    /* I think this is suficient to determine if it would cause a loop. No need to do connected(...) */
+    if(v->parent || v->path_parent) {
+	    LOG_CMD(PRINT_SPECIAL, "Tryed to link nodes already connected, so skip this one.\n", v->id);
+        return;
+    }
+
+    LOG_CMD(PRINT_LINK, "After access v.\n");
+    print_tree(PRINT_LINK, tree);
+
     w->right = v;
     v->parent = w;
+
+    /* v->left = w;
+    w->parent = v;*/
+
 
     LOG_CMD(PRINT_LINK, "After the link.\n");
     print_tree(PRINT_LINK, tree);
@@ -429,6 +520,7 @@ Node *find_root(Node *v) {
     access(v);
     while(v->left) {
         v = v->left;
+        unflip(v);
     }
 
     splay(v);
@@ -461,14 +553,24 @@ int connected(Tree *tree, int _v, int _w) {
     return res;
 }
 
+void unflip_all(Node *n) {
+    if (!n) {
+        return;
+    }
+    unflip(n);
+    unflip_all(n->left);
+    unflip_all(n->right);
+}
+
 void print_tree(int color, Tree *tree) {
     #if DEBUG
         assert(tree);
+
         Node *unique_aux_roots[tree->size];
         int inserted_roots = 0;
 
         /* Find all diferent roots of aux trees */
-		int i;
+        int i;
         for (i = 0; i < tree->size; i++) {
             Node *root = tree->nodes[i];
             while(root->parent) {
@@ -518,7 +620,7 @@ int main() {
 				link(tree, arg1, arg2);
 				break;
 			case 'C':
-				cut(tree, arg2, arg1);
+				cut(tree, arg1, arg2);
 				/* cut(tree, arg1, arg2); */
 				break;
 			case 'Q':
