@@ -1,7 +1,28 @@
+#define _POSIX_C_SOURCE 199309L
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+
+#define NANO_FACTOR 1E9
+#include <time.h>
+#define START_COUNTER() start_count()
+#define STOP_COUNTER(...) log_time(__VA_ARGS__)
+
+struct timespec startTime, endTime;
+FILE* fp;
+
+void start_count() {
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &startTime);
+}
+
+/* also stops counter */
+void log_time(char* text) {
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &endTime);
+    double dt = endTime.tv_sec - startTime.tv_sec + (endTime.tv_nsec - startTime.tv_nsec) / NANO_FACTOR;
+    fprintf(fp, "\t%s - %f seconds\n" , text, dt);
+}
 
 #define NOT_FLIPED 0
 #define FLIPED 1
@@ -337,6 +358,9 @@ int main() {
 	scanf("%d\n", &size);
 	Tree *tree = make_tree(size);
 
+    fp = fopen("time.log", "w");
+    start_count();
+
     while (scanf("%c %d %d\n", &command, &arg1, &arg2) != EOF) {
 		arg1--;
         arg2--;
@@ -355,6 +379,9 @@ int main() {
 				exit(EXIT_FAILURE);
 		}
 	}
+
+    log_time("");
+    fclose(fp);
 
     free_tree(tree);
 	return 0;
